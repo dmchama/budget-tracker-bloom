@@ -93,7 +93,7 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-background text-foreground">
       <Navbar />
       <main className="flex-1 container px-4 md:px-6 py-6">
         <MonthSelector currentDate={currentDate} onDateChange={setCurrentDate} />
