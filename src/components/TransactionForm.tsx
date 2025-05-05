@@ -11,9 +11,10 @@ import { Transaction } from "@/types/Transaction";
 
 interface TransactionFormProps {
   onAddTransaction: (transaction: Transaction) => void;
+  currency?: string;
 }
 
-const TransactionForm = ({ onAddTransaction }: TransactionFormProps) => {
+const TransactionForm = ({ onAddTransaction, currency = "LKR" }: TransactionFormProps) => {
   const { toast } = useToast();
   const [type, setType] = useState<"income" | "expense">("income");
   const [amount, setAmount] = useState("");
@@ -47,12 +48,13 @@ const TransactionForm = ({ onAddTransaction }: TransactionFormProps) => {
       description,
       category,
       date: new Date(),
+      currency
     };
 
     onAddTransaction(newTransaction);
     toast({
       title: `${type === "income" ? "Income" : "Expense"} added`,
-      description: `${description} for $${amount} has been added.`,
+      description: `${description} for ${currency} ${amount} has been added.`,
     });
 
     // Reset form
@@ -100,16 +102,20 @@ const TransactionForm = ({ onAddTransaction }: TransactionFormProps) => {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount ($)</Label>
-            <Input 
-              id="amount" 
-              placeholder="0.00" 
-              type="number"
-              min="0.01" 
-              step="0.01"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-            />
+            <Label htmlFor="amount">Amount ({currency})</Label>
+            <div className="relative">
+              <span className="absolute left-3 top-2.5 text-sm text-gray-500">{currency}</span>
+              <Input 
+                id="amount" 
+                className="pl-12"
+                placeholder="0.00" 
+                type="number"
+                min="0.01" 
+                step="0.01"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+              />
+            </div>
           </div>
           
           <div className="space-y-2">
@@ -130,7 +136,7 @@ const TransactionForm = ({ onAddTransaction }: TransactionFormProps) => {
           
           <Button 
             type="submit" 
-            className={type === "income" ? "bg-finance-green hover:bg-finance-green/90" : "bg-finance-red hover:bg-finance-red/90"}
+            className={type === "income" ? "bg-finance-green hover:bg-finance-green/90 w-full" : "bg-finance-red hover:bg-finance-red/90 w-full"}
           >
             Add {type === "income" ? "Income" : "Expense"}
           </Button>

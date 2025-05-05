@@ -6,4 +6,5 @@ export interface Transaction {
   description: string;
   category: string;
   date: Date;
+  currency: string;
 }

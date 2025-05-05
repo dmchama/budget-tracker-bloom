@@ -14,19 +14,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TransactionListProps {
   transactions: Transaction[];
   onDeleteTransaction: (id: string) => void;
+  currency?: string;
 }
 
-const TransactionList = ({ transactions, onDeleteTransaction }: TransactionListProps) => {
+const TransactionList = ({ transactions, onDeleteTransaction, currency = "LKR" }: TransactionListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const isMobile = useIsMobile();
 
   const filteredTransactions = transactions.filter(transaction => 
     transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     transaction.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const formatAmount = (amount: number) => {
+    return `${currency} ${amount.toLocaleString('si-LK')}`;
+  };
 
   if (transactions.length === 0) {
     return (
@@ -47,6 +54,67 @@ const TransactionList = ({ transactions, onDeleteTransaction }: TransactionListP
     );
   }
 
+  if (isMobile) {
+    // Mobile view - card-based layout
+    return (
+      <Card>
+        <CardHeader className="flex flex-col space-y-2">
+          <CardTitle>Recent Transactions</CardTitle>
+          <div className="relative w-full">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search transactions..."
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </CardHeader>
+        <CardContent>
+          {filteredTransactions.length > 0 ? (
+            <div className="space-y-4">
+              {filteredTransactions.map((transaction) => (
+                <div key={transaction.id} className="bg-white border rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-medium">{transaction.description}</span>
+                    <div className={`flex items-center font-medium ${transaction.type === "income" ? "text-finance-green" : "text-finance-red"}`}>
+                      {transaction.type === "income" ? (
+                        <ArrowUp className="h-4 w-4 mr-1" />
+                      ) : (
+                        <ArrowDown className="h-4 w-4 mr-1" />
+                      )}
+                      {formatAmount(transaction.amount)}
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <div>
+                      <span className="capitalize">{transaction.category}</span>
+                      <span className="mx-2">•</span>
+                      <span>{format(new Date(transaction.date), "MMM dd, yyyy")}</span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => onDeleteTransaction(transaction.id)}
+                      className="h-auto p-0 text-gray-500 hover:text-red-500"
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-4 text-muted-foreground">
+              No matching transactions found.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Desktop view - table layout
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -87,7 +155,7 @@ const TransactionList = ({ transactions, onDeleteTransaction }: TransactionListP
                     ) : (
                       <ArrowDown className="h-4 w-4 text-finance-red mr-1" />
                     )}
-                    ${transaction.amount.toFixed(2)}
+                    {formatAmount(transaction.amount)}
                   </TableCell>
                   <TableCell>
                     <Button

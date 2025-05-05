@@ -11,13 +11,23 @@ import { Transaction } from "@/types/Transaction";
 import { format, isSameMonth } from "date-fns";
 import { ArrowUp, ArrowDown, DollarSign } from "lucide-react";
 
+const CURRENCY = "LKR";
+
 const Index = () => {
   const { toast } = useToast();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
     // Load from localStorage if available
     const saved = localStorage.getItem("transactions");
-    return saved ? JSON.parse(saved) : [];
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Add currency field to existing transactions if it doesn't exist
+      return parsed.map((t: any) => ({
+        ...t,
+        currency: t.currency || CURRENCY
+      }));
+    }
+    return [];
   });
 
   // Save transactions to localStorage whenever they change
@@ -77,28 +87,33 @@ const Index = () => {
     });
   };
 
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return `${CURRENCY} ${amount.toLocaleString('si-LK')}`;
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      <main className="flex-1 container py-6">
+      <main className="flex-1 container px-4 md:px-6 py-6">
         <MonthSelector currentDate={currentDate} onDateChange={setCurrentDate} />
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6">
           <StatCard 
             title="Monthly Income" 
-            value={`$${monthlyIncome.toFixed(2)}`}
+            value={formatCurrency(monthlyIncome)}
             icon={<ArrowUp className="h-4 w-4 text-finance-green" />}
             className="border-l-4 border-l-finance-green"
           />
           <StatCard 
             title="Monthly Expenses" 
-            value={`$${monthlyExpenses.toFixed(2)}`}
+            value={formatCurrency(monthlyExpenses)}
             icon={<ArrowDown className="h-4 w-4 text-finance-red" />}
             className="border-l-4 border-l-finance-red"
           />
           <StatCard 
             title="Balance" 
-            value={`$${balance.toFixed(2)}`}
+            value={formatCurrency(balance)}
             icon={<DollarSign className="h-4 w-4" />}
             className={`border-l-4 ${balance >= 0 ? "border-l-finance-green" : "border-l-finance-red"}`}
           />
@@ -109,13 +124,14 @@ const Index = () => {
             <OverviewChart data={chartData} />
           </div>
           <div>
-            <TransactionForm onAddTransaction={handleAddTransaction} />
+            <TransactionForm onAddTransaction={handleAddTransaction} currency={CURRENCY} />
           </div>
         </div>
         
         <TransactionList 
           transactions={currentMonthTransactions}
           onDeleteTransaction={handleDeleteTransaction}
+          currency={CURRENCY}
         />
       </main>
     </div>
