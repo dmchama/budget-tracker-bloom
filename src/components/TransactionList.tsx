@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
-import { ArrowDown, ArrowUp, Calendar, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, Calendar, Search, Edit, Trash2 } from "lucide-react";
 import { Transaction } from "@/types/Transaction";
 import { 
   Table,
@@ -15,15 +15,24 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useIsMobile } from "@/hooks/use-mobile";
+import TransactionEditor from "./TransactionEditor";
 
 interface TransactionListProps {
   transactions: Transaction[];
   onDeleteTransaction: (id: string) => void;
+  onEditTransaction?: (transaction: Transaction) => void;
   currency?: string;
 }
 
-const TransactionList = ({ transactions, onDeleteTransaction, currency = "LKR" }: TransactionListProps) => {
+const TransactionList = ({ 
+  transactions, 
+  onDeleteTransaction, 
+  onEditTransaction,
+  currency = "LKR" 
+}: TransactionListProps) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const isMobile = useIsMobile();
 
   const filteredTransactions = transactions.filter(transaction => 
@@ -33,6 +42,19 @@ const TransactionList = ({ transactions, onDeleteTransaction, currency = "LKR" }
 
   const formatAmount = (amount: number) => {
     return `${currency} ${amount.toLocaleString('si-LK')}`;
+  };
+
+  const handleEdit = (transaction: Transaction) => {
+    setEditingTransaction(transaction);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = (editedTransaction: Transaction) => {
+    if (onEditTransaction) {
+      onEditTransaction(editedTransaction);
+    }
+    setIsEditDialogOpen(false);
+    setEditingTransaction(null);
   };
 
   if (transactions.length === 0) {
@@ -74,7 +96,7 @@ const TransactionList = ({ transactions, onDeleteTransaction, currency = "LKR" }
           {filteredTransactions.length > 0 ? (
             <div className="space-y-4">
               {filteredTransactions.map((transaction) => (
-                <div key={transaction.id} className="bg-white border rounded-lg p-4">
+                <div key={transaction.id} className="bg-card border rounded-lg p-4">
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-medium">{transaction.description}</span>
                     <div className={`flex items-center font-medium ${transaction.type === "income" ? "text-finance-green" : "text-finance-red"}`}>
@@ -86,20 +108,30 @@ const TransactionList = ({ transactions, onDeleteTransaction, currency = "LKR" }
                       {formatAmount(transaction.amount)}
                     </div>
                   </div>
-                  <div className="flex justify-between text-sm text-gray-500">
+                  <div className="flex justify-between text-sm text-muted-foreground">
                     <div>
                       <span className="capitalize">{transaction.category}</span>
                       <span className="mx-2">•</span>
                       <span>{format(new Date(transaction.date), "MMM dd, yyyy")}</span>
                     </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => onDeleteTransaction(transaction.id)}
-                      className="h-auto p-0 text-gray-500 hover:text-red-500"
-                    >
-                      Delete
-                    </Button>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleEdit(transaction)}
+                        className="h-auto p-1 text-gray-500 hover:text-blue-500"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => onDeleteTransaction(transaction.id)}
+                        className="h-auto p-1 text-gray-500 hover:text-red-500"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -110,6 +142,13 @@ const TransactionList = ({ transactions, onDeleteTransaction, currency = "LKR" }
             </div>
           )}
         </CardContent>
+        <TransactionEditor
+          transaction={editingTransaction}
+          isOpen={isEditDialogOpen}
+          onClose={() => setIsEditDialogOpen(false)}
+          onSave={handleSaveEdit}
+          currency={currency}
+        />
       </Card>
     );
   }
@@ -137,7 +176,7 @@ const TransactionList = ({ transactions, onDeleteTransaction, currency = "LKR" }
               <TableHead>Description</TableHead>
               <TableHead>Category</TableHead>
               <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="w-[80px]"></TableHead>
+              <TableHead className="w-[120px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -158,13 +197,24 @@ const TransactionList = ({ transactions, onDeleteTransaction, currency = "LKR" }
                     {formatAmount(transaction.amount)}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onDeleteTransaction(transaction.id)}
-                    >
-                      Delete
-                    </Button>
+                    <div className="flex space-x-2 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEdit(transaction)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onDeleteTransaction(transaction.id)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -178,6 +228,13 @@ const TransactionList = ({ transactions, onDeleteTransaction, currency = "LKR" }
           </TableBody>
         </Table>
       </CardContent>
+      <TransactionEditor
+        transaction={editingTransaction}
+        isOpen={isEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
+        onSave={handleSaveEdit}
+        currency={currency}
+      />
     </Card>
   );
 };

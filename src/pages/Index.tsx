@@ -79,6 +79,16 @@ const Index = () => {
     setTransactions(prev => [transaction, ...prev]);
   };
 
+  const handleEditTransaction = (editedTransaction: Transaction) => {
+    setTransactions(prev => 
+      prev.map(t => t.id === editedTransaction.id ? editedTransaction : t)
+    );
+    toast({
+      title: "Transaction updated",
+      description: "The transaction has been modified successfully."
+    });
+  };
+
   const handleDeleteTransaction = (id: string) => {
     setTransactions(prev => prev.filter(t => t.id !== id));
     toast({
@@ -131,6 +141,7 @@ const Index = () => {
         <TransactionList 
           transactions={currentMonthTransactions}
           onDeleteTransaction={handleDeleteTransaction}
+          onEditTransaction={handleEditTransaction}
           currency={CURRENCY}
         />
       </main>
